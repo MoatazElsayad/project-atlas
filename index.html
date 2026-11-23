@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B6 · Inside the scheduler</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><a class="brand" href="#overview" aria-label="Whole system"><span class="logo">B6</span><span>PROJECT ATLAS<small>Personal discussion guide</small></span></a><div class="topmeta"><span class="live-dot"></span> LOCAL / OFFLINE <span class="rev">73fead4 · 23 NOV 2026</span><button id="helpBtn" class="quiet">How to explore</button></div></header>
+<main>
+<section class="intro"><div><div class="eyebrow">FROM TASK DEFINITION TO CPU DECISION</div><h1>Inside the scheduler<span>.</span></h1><p>One project. Five contributors. Explore the objects, algorithms and hand-offs that make a run.</p></div><div class="intro-note"><strong>A map of the actual code</strong><span>TCB = TaskSpec · EDF = Earliest Deadline First<br>This is a study tool, not a running RTOS.</span></div></section>
+<div class="workspace-tools"><nav id="views" aria-label="Map views"></nav><button id="teamBtn" class="quiet">Team & evidence ↗</button></div>
+<section class="workspace">
+<div class="map-column">
+<div class="map-heading"><div><span id="viewIndex" class="eyebrow"></span><h2 id="viewTitle"></h2></div><div class="map-actions"><button id="zoomOut" aria-label="Zoom out">−</button><button id="fit">Fit</button><button id="zoomIn" aria-label="Zoom in">+</button></div></div>
+<p id="viewDesc"></p>
+<div class="filters"><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Find EDF, mutex, TCB, metrics…" autocomplete="off" aria-label="Search all components"><div id="results" hidden></div></label><label class="owner-filter"><span>Highlight</span><select id="owner" aria-label="Highlight contributor"><option value="">Everyone</option><option>Moataz</option><option>Youssef</option><option>Marc</option><option>Sarofem</option><option>Bavly</option></select></label></div>
+<div id="graphWrap"><svg id="graph" role="img" aria-label="Interactive project dependency graph" viewBox="0 0 1330 635"><defs><pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#dce3e6"/></pattern></defs><rect width="100%" height="100%" fill="url(#dots)"/><g id="scene"></g></svg><div id="tooltip" role="tooltip" hidden></div><span class="graph-hint">Click a card to explore · Drag the canvas to pan · Use + / − to zoom</span></div>
+<div class="legend"><span><i class="flow"></i>Calls / data flow</span><span><i class="owns"></i>Owns storage</span><span><i class="reference"></i>Borrows / verifies</span><span><i class="mutation"></i>Mutates state</span><span><i class="gap"></i>Missing connection</span></div>
+<div class="tourbar"><div><span class="eyebrow">FOLLOW THE CONNECTIONS</span><h3>Walk through a real operation</h3></div><select id="tourSelect" aria-label="Choose walkthrough"><option value="">Choose a walkthrough…</option></select></div>
+<div id="tour" hidden><div><span id="tourCount" class="eyebrow"></span><h3 id="tourTitle"></h3><p id="tourText"></p></div><div class="tour-buttons"><button id="prevStep">← Previous</button><button id="nextStep" class="primary">Next step →</button><button id="closeTour" aria-label="Close walkthrough">×</button></div></div>
+</div>
+<aside id="inspector" aria-label="Component details" aria-live="polite"></aside>
+</section>
+<section class="lower-grid"><article class="oracle"><div class="eyebrow">EXPLAIN YOUR PART</div><h2>Why inheritance changes the result</h2><p>The same work, a different order. L holds the mutex. H needs it. M does not.</p><div class="oracle-controls"><div class="segmented"><button id="off" aria-pressed="true">Inheritance OFF</button><button id="on" aria-pressed="false">Inheritance ON</button></div><span id="oracleBadge" class="badge"></span></div><div id="timeline" aria-label="Expected CPU timeline"></div><div class="tick-control"><label for="tick">Inspect tick <strong id="tickValue">0</strong></label><input type="range" id="tick" min="0" max="9" step="1" value="0"></div><div id="tickExplanation"></div><div class="oracle-foot"><span class="mini-key l">L · priority 1</span><span class="mini-key m">M · priority 2</span><span class="mini-key h">H · priority 3</span></div><p class="small">Hand-authored teaching animation of the documented oracle, not an engine run. ON is verified by resource component tests; its production scheduler callback is still missing at this source revision.</p></article>
+<article class="revision"><div class="eyebrow">KEEP THESE DISTINCTIONS CLEAR</div><h2>Six answers for the discussion</h2><div id="questions"></div></article></section>
+<section class="mutation-section"><div class="eyebrow">WHO IS ALLOWED TO CHANGE WHAT?</div><h2>One Job, coordinated writers</h2><p>A “transfer” usually moves queue membership or grants ownership. It does not move the Job object out of the Registry.</p><div class="table-scroll"><table><thead><tr><th>Writer</th><th>Fields / storage it changes</th><th>Boundary it respects</th></tr></thead><tbody>
+<tr><td>Registry · Moataz</td><td>New job ID, release/deadline, initial priority, stable job slot, ID maps</td><td>Retains ownership of every Job until teardown</td></tr>
+<tr><td>Scheduler · Youssef</td><td>Clock, running pointer, CPU/script progress, timestamps, quantum, readyNode, EDF index, rings + bitmap</td><td>Calls managers for resource and timer rules</td></tr>
+<tr><td>ResourceManager · Moataz</td><td>Owner IDs, permit counts, waitNode/reason, heldMutexId, blockedResourceId, effectivePriority</td><td>Callbacks ask Scheduler to change ready membership</td></tr>
+<tr><td>TimerManager · Sarofem</td><td>Timer entries, timerId, wakeTick, sleep/expiry state, fresh wake quantum</td><td>Returns wakers; never inserts into ready rings itself</td></tr>
+<tr><td>RM assignment · Marc</td><td>TaskSpec.basePriority on the private scenario copy</td><td>Runs before validation/publication and job creation</td></tr>
+<tr><td>Trace / metrics / exporter</td><td>Copied records, measurements, JSON output</td><td>Observe decisions; do not reschedule jobs</td></tr>
+<tr><td>Dashboard · Bavly</td><td>Selected recording, tick and inspector UI</td><td>Does not mutate C++ state or recompute a schedule</td></tr>
+</tbody></table></div></section>
+<footer>Built for Moataz’s discussion preparation · Source snapshot <code>73fead4</code> · No repository code changed · Works without a server or network</footer>
+</main>
+<dialog id="modal"><button class="dialog-close" aria-label="Close dialog">×</button><div id="modalContent"></div></dialog>
+<script src="data.js"></script><script src="app.js"></script></body></html>

@@ -1,0 +1,7 @@
+.git/
+node_modules/
+preview-*.png
+check.cjs
+README.md
+*.log
+.env*
